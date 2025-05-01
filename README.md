@@ -1,71 +1,84 @@
-# windsurf-linear README
+# Windsurf Linear Library
 
-This is the README for your extension "windsurf-linear". After writing up a brief description, we recommend including the following sections.
+A Node.js library providing a simple interface to interact with the Linear API using the `@linear/sdk`.
 
-## Features
+This library is primarily used by the [Windsurf Linear VS Code Extension](https://github.com/jawnty/windsurf-linear-extension).
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Installation
 
-For example if there is an image subfolder under your extension project workspace:
+```bash
+npm install @linear/sdk
+# Note: This library is not published to npm yet.
+# If using independently, you would typically link it locally or publish it.
+```
 
-\!\[feature X\]\(images/feature-x.png\)
+## Usage
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+```javascript
+import { LinearClient } from '@linear/sdk';
+import { fetchMyIssues, createIssue, fetchTeams, fetchIssueById, updateIssue, archiveIssue } from 'windsurf-linear'; // Adjust path if needed
 
-## Requirements
+// Initialize the official Linear SDK client
+const linearClient = new LinearClient({ apiKey: 'YOUR_LINEAR_API_KEY' });
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+async function main() {
+  try {
+    // Fetch teams
+    const teams = await fetchTeams(linearClient);
+    console.log('Teams:', teams);
+    const teamId = teams[0]?.id; // Get the ID of the first team
 
-## Extension Settings
+    if (teamId) {
+      // Create an issue
+      const newIssue = await createIssue(linearClient, 'New Task from Library', teamId, 'This is the description.');
+      console.log('Created Issue:', newIssue);
+      const issueId = newIssue.id;
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+      // Fetch your issues
+      const myIssues = await fetchMyIssues(linearClient);
+      console.log('My Issues:', myIssues);
 
-For example:
+      // Fetch the specific issue
+      const fetchedIssue = await fetchIssueById(linearClient, issueId);
+      console.log('Fetched Issue by ID:', fetchedIssue);
 
-This extension contributes the following settings:
+      // Update the issue
+      const updatedIssue = await updateIssue(linearClient, issueId, { title: 'Updated Task Title' });
+      console.log('Updated Issue:', updatedIssue);
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+      // Archive the issue
+      const archivedIssue = await archiveIssue(linearClient, issueId);
+      console.log('Archived Issue:', archivedIssue);
 
-## Known Issues
+      // Verify archival (optional)
+      const checkArchived = await fetchIssueById(linearClient, issueId);
+       console.log('Is Archived:', !!checkArchived?.archivedAt);
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+    } else {
+      console.log('No teams found to create an issue in.');
+    }
 
-## Release Notes
+  } catch (error) {
+    console.error('Linear API Error:', error);
+  }
+}
 
-Users appreciate release notes as you update your extension.
+main();
+```
 
-### 1.0.0
+## API
 
-Initial release of ...
+This library exports the following asynchronous functions, which wrap the `@linear/sdk`:
 
-### 1.0.1
+*   `fetchTeams(client: LinearClient): Promise<Team[]>` - Fetches the user's teams.
+*   `fetchMyIssues(client: LinearClient): Promise<Issue[]>` - Fetches issues assigned to the user.
+*   `fetchIssueById(client: LinearClient, issueId: string): Promise<Issue | undefined>` - Fetches a specific issue by its ID (works even if archived).
+*   `createIssue(client: LinearClient, title: string, teamId: string, description?: string): Promise<Issue>` - Creates a new issue.
+*   `updateIssue(client: LinearClient, issueId: string, payload: IssueUpdateInput): Promise<Issue>` - Updates an existing issue. Requires the issue ID and a payload object (e.g., `{ title: 'New Title', description: 'New Desc', ... }`).
+*   `archiveIssue(client: LinearClient, issueId: string): Promise<ArchivePayload>` - Archives (soft-deletes) an issue.
 
-Fixed issue #.
+*(Where `LinearClient`, `Team`, `Issue`, `IssueUpdateInput`, `ArchivePayload` are types from `@linear/sdk`)*
 
-### 1.1.0
+## License
 
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+[MIT](LICENSE)
